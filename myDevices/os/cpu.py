@@ -2,7 +2,8 @@ import psutil
 import os
 from glob import glob
 from time import sleep
-from myDevices.utils.logger import exception
+from myDevices.utils.logger import debug,exception
+from myDevices.os.hardware import Hardware
 
 class CpuInfo(object):
     """Class for retrieving CPU info"""
@@ -10,7 +11,11 @@ class CpuInfo(object):
     def get_cpu_info(self):
         """Return CPU temperature, load average and usage info as a dict"""
         info = {}
-        info['temperature'] = self.get_cpu_temp()
+        hardware = Hardware() 
+        if hardware.getManufacturer() == "Pine" :
+         info['temperature'] = self.get_cpu_temp(1)
+        else:
+         info['temperature'] = self.get_cpu_temp(1000)
         info["loadavg"] = self.get_load_avg()
         info["usage"] = self.get_cpu_usage()
         return info
@@ -39,7 +44,7 @@ class CpuInfo(object):
             exception('Error getting CPU load info')
         return cpu_load
 
-    def get_cpu_temp(self):
+    def get_cpu_temp(self,divider = 1000.0):
         """Get CPU temperature"""
         info = {}
         thermal_dirs = glob('/sys/class/thermal/thermal_zone*')
@@ -54,7 +59,7 @@ class CpuInfo(object):
                     if thermal_type != 'gpu_thermal':
                         with open(thermal_dir + '/temp', 'r') as temp_file:
                             content = int(temp_file.read().strip())
-                            temp = content / 1000.0
+                            temp = content / divider 
                             break
                 except:
                     pass
